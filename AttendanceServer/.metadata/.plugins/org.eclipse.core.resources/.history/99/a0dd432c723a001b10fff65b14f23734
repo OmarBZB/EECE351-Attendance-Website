@@ -1,0 +1,96 @@
+package com.classes;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * Servlet implementation class updateTime
+ */
+@WebServlet("/updateTime")
+public class updateTime extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * @see HttpServlet#HttpServlet()
+	 */
+	public updateTime() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
+	 *      response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		response.getWriter().append("Served at: ").append(request.getContextPath());
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
+	 *      response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		String ID = request.getParameter("studentID");
+		String InTime = request.getParameter("updatedInTime");
+		String OutTime = request.getParameter("updatedOutTime");
+		String TotalTime = computeTotalTime(InTime, OutTime);
+		String dbURL = "jdbc:mysql://localhost:3306/351_ClassAttendanceInfo";
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection(dbURL, "root", "H15112001");
+			Statement stmt = conn.createStatement();
+			String query = "Update ignore StudentsAttendance" + " Set In_Time=" + "'" + InTime + "'" + ", out_Time="
+					+ "'" + OutTime + "'" + ", Total_Time=" + "'" + TotalTime + "'" + " WHERE S_ID=" + "'" + ID + "' ";
+
+			stmt.executeUpdate(query);
+
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+				}
+			}
+		}
+		response.sendRedirect("ClassInfo.jsp");
+	}
+
+	private String computeTotalTime(String inTime, String outTime) {
+		String ShourIn = inTime.substring(0, 2);
+		String ShourOut = outTime.substring(0, 2);
+		String SminIn = inTime.substring(3, 5);
+		String SminOut = outTime.substring(3, 5);
+		String SsecIn = inTime.substring(6, 8);
+		String SsecOut = outTime.substring(6, 8);
+		int hourIn = Integer.valueOf(ShourIn);
+		int hourOut = Integer.valueOf(ShourOut);
+		int minIn = Integer.valueOf(SminIn);
+		int minOut = Integer.valueOf(SminOut);
+		int secIn = Integer.valueOf(SsecIn);
+		int secOut = Integer.valueOf(SsecOut);
+		int InTimeSeconds = (hourIn * 3600) + (minIn * 60) + secIn;
+		int OutTimeSeconds = (hourOut * 3600) + (minOut * 60) + secOut;
+		int TimeSeconds = OutTimeSeconds - InTimeSeconds;
+		int TotalTimeHours = (TimeSeconds / 3600);
+		int TotalTimeMins = ((TimeSeconds % 3600) / 60) / 1;
+		int TotalTimeSecs = ((TimeSeconds % 3600) % 60);
+		String TotalTime = TotalTimeHours + ":" + TotalTimeMins + ":" + TotalTimeSecs;
+		return TotalTime;
+	}
+
+}
